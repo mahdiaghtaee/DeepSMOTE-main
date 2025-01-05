@@ -1,4 +1,4 @@
-#
+# DeepSMOTE_v2
 conda create --name DeepSMOTE python=3.6
 conda activate DeepSMOTE
 
