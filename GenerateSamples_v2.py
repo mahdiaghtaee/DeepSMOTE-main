@@ -18,19 +18,27 @@ t0 = time.time()
 """args for models"""
 
 args = {}
+#تعداد نرون‌ها در لایه‌های پنهان شبکه.
 args['dim_h'] = 64          # factor controlling size of hidden layers
+ # تعداد کانال‌های ورودی (در اینجا 1 برای تصاویر سیاه‌وسفید)
 args['n_channel'] = 1       # number of channels in the input data 
-
+# تعداد ابعاد فضای نهان (latent space)
 args['n_z'] = 300 #600     # number of dimensions in latent space. 
-
+# واریانس در فضای نهان
 args['sigma'] = 1.0        # variance in n_z
+ # پارامتر تنظیمی برای وزن دادن به ضرر Discriminator
 args['lambda'] = 0.01      # hyper param for weight of discriminator loss
+# نرخ یادگیری برای الگوریتم Adam
 args['lr'] = 0.0002        # learning rate for Adam optimizer .000
+ # تعداد اپوک‌ها برای آموزش
 args['epochs'] = 1 #50         # how many epochs to run for
+# اندازه بچ (Batch Size)
 args['batch_size'] = 100   # batch size for SGD
+ # اگر True باشد، وزن‌ها در هر اپوک ذخیره می‌شود
 args['save'] = True        # save weights at each epoch of training if True
+  # اگر True باشد، مدل آموزش داده می‌شود، در غیر این صورت مدل بارگذاری می‌شود
 args['train'] = True       # train networks if True, else load networks from
-
+# دیتاست مورد استفاده (در اینجا MNIST)
 args['dataset'] = 'mnist' #'fmnist' # specify which dataset to use
 
 ##############################################################################
@@ -44,6 +52,7 @@ class Encoder(nn.Module):
         self.dim_h = args['dim_h']
         self.n_z = args['n_z']
         
+        # لایه‌های کانولوشن برای استخراج ویژگی‌ها از تصاویر
         # convolutional filters, work excellent with image data
         self.conv = nn.Sequential(
             nn.Conv2d(self.n_channel, self.dim_h, 4, 2, 1, bias=False),
@@ -70,9 +79,13 @@ class Encoder(nn.Module):
             #nn.Conv2d(self.dim_h * 8, 1, 2, 1, 0, bias=False))
             #nn.Conv2d(self.dim_h * 8, 1, 4, 1, 0, bias=False))
         # final layer is fully connected
+        # لایه fully connected در انتها برای فشرده‌سازی ویژگی‌ها به فضای نهان
         self.fc = nn.Linear(self.dim_h * (2 ** 3), self.n_z)
         
 
+    # عبور داده‌ها از لایه‌های کانولوشن
+    # حذف ابعاد اضافی
+     # عبور از لایه fully connected برای تولید ویژگی‌های فضای نهان
     def forward(self, x):
         #print('enc')
         #print('input ',x.size()) #torch.Size([100, 3,32,32])
@@ -90,7 +103,7 @@ class Encoder(nn.Module):
         #out  torch.Size([100, 300])
         return x
 
-
+# مدل Decoder برای بازسازی داده‌ها از فضای نهان
 class Decoder(nn.Module):
     def __init__(self, args):
         super(Decoder, self).__init__()
@@ -99,11 +112,13 @@ class Decoder(nn.Module):
         self.dim_h = args['dim_h']
         self.n_z = args['n_z']
 
+        # اولین لایه Fully Connected برای تبدیل ورودی از فضای نهان به فضای بزرگ‌تر
         # first layer is fully connected
         self.fc = nn.Sequential(
             nn.Linear(self.n_z, self.dim_h * 8 * 7 * 7),
             nn.ReLU())
 
+        # لایه‌های Deconvolution برای بازسازی تصاویر از ویژگی‌های فضای نهان
         # deconvolutional filters, essentially inverse of convolutional filters
         self.deconv = nn.Sequential(
             nn.ConvTranspose2d(self.dim_h * 8, self.dim_h * 4, 4),
@@ -126,6 +141,7 @@ class Decoder(nn.Module):
 
 ##############################################################################
 
+# تابع برای دریافت داده‌های کلاس خاص (مثلاً یک کلاس خاص از داده‌ها)
 def biased_get_class1(c):
     
     xbeg = dec_x[dec_y == c]
@@ -134,10 +150,9 @@ def biased_get_class1(c):
     return xbeg, ybeg
     #return xclass, yclass
 
-
+# تابع برای تولید نمونه‌های مصنوعی از داده‌های کلاس خاص
 def G_SM1(X, y,n_to_sample,cl):
-
-    
+    # فیت کردن مدل Nearest Neighbors برای انتخاب نزدیک‌ترین نمونه‌ها
     # fitting the model
     n_neigh = 5 + 1
     nn = NearestNeighbors(n_neighbors=n_neigh, n_jobs=1)
@@ -154,16 +169,20 @@ def G_SM1(X, y,n_to_sample,cl):
     samples = X_base + np.multiply(np.random.rand(n_to_sample,1),
             X_neighbor - X_base)
 
+    # استفاده از 10 به عنوان برچسب برای نمونه‌های مصنوعی
     #use 10 as label because 0 to 9 real classes and 1 fake/smoted = 10
     return samples, [cl]*n_to_sample
 
 #############################################################################
+ # تنظیمات چاپ اعداد برای دقت بیشتر
 np.printoptions(precision=5,suppress=True)
 
+# لیست مسیرهای فایل‌ها برای داده‌های آموزش
 # Define the base directory for images and labels
 base_trnimg_dir = 'MNIST/trn_img/'  # Adjust as per your actual directory structure
 base_trnlab_dir = 'MNIST/trn_lab/'  # Adjust as per your actual directory structure
 
+# تعداد مدل‌ها
 # Assuming you have 5 sets (0 to 4)
 num_models = 5
 
@@ -174,6 +193,7 @@ idtrl_f = [os.path.join(base_trnlab_dir, f"{m}_trn_lab.txt") for m in range(num_
 print("Image Files:", idtri_f)
 print("Label Files:", idtrl_f)
 
+# مسیر ذخیره‌سازی مدل‌ها
 #path on the computer where the models are stored
 modpth = 'MNIST/models/crs5/'
 
@@ -185,18 +205,23 @@ for p in range(5):
     encf.append(enc)
     decf.append(dec)
 
+# پردازش داده‌ها برای هر مدل
 for m in range(5):
     print(m)
     trnimgfile = idtri_f[m]
     trnlabfile = idtrl_f[m]
     print(trnimgfile)
     print(trnlabfile)
+
+    # بارگذاری داده‌های آموزشی
     dec_x = np.loadtxt(trnimgfile) 
     dec_y = np.loadtxt(trnlabfile)
 
+    # نمایش ابعاد تصاویر قبل از تغییر شکل
     print('train imgs before reshape ',dec_x.shape) #(44993, 3072) 45500, 3072)
     print('train labels ',dec_y.shape) #(44993,) (45500,)
 
+    # تغییر شکل داده‌ها به ابعاد مناسب برای پردازش
     dec_x = dec_x.reshape(dec_x.shape[0],1,28,28)
 
     print('decy ',dec_y.shape)
@@ -231,17 +256,22 @@ for m in range(5):
     resx = []
     resy = []
 
+    # برای هر کلاس داده‌های مصنوعی تولید می‌شود
     for i in range(1,10):
+         # دریافت داده‌ها و برچسب‌های کلاس i
         xclass, yclass = biased_get_class1(i)
+        # چاپ ابعاد داده‌ها
         print(xclass.shape) #(500, 3, 32, 32)
         print(yclass[0]) #(500,)
             
+        # کدگذاری داده‌های xclass به فضای ویژگی‌ها    
         #encode xclass to feature space
         xclass = torch.Tensor(xclass)
         xclass = xclass.to(device)
         xclass = encoder(xclass)
         print(xclass.shape) #torch.Size([500, 600])
             
+        # تبدیل داده‌ها به numpy array    
         xclass = xclass.detach().cpu().numpy()
         n = imbal[0] - imbal[i]
         xsamp, ysamp = G_SM1(xclass,yclass,n,i)
@@ -250,6 +280,7 @@ for m in range(5):
         ysamp = np.array(ysamp)
         print(ysamp.shape) #4500   
     
+        # تولید تصاویر از نمونه‌های مصنوعی برای استفاده در مدل ResNet
         """to generate samples for resnet"""   
         xsamp = torch.Tensor(xsamp)
         xsamp = xsamp.to(device)
@@ -267,6 +298,7 @@ for m in range(5):
         #print('resy ',resy.shape)
         #print()
     
+    # ترکیب تمام تصاویر و برچسب‌ها
     resx1 = np.vstack(resx)
     resy1 = np.hstack(resy)
     #print(resx1.shape) #(34720, 3, 32, 32)

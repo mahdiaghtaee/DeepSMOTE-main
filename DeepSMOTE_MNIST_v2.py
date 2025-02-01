@@ -143,18 +143,21 @@ def biased_get_class(c):
     #return xclass, yclass
 
 
+# تابع برای تولید نمونه‌های مصنوعی با استفاده از تکنیک SMOTE
 def G_SM(X, y,n_to_sample,cl):
 
     # determining the number of samples to generate
     #n_to_sample = 10 
 
     # fitting the model
+    # فیت کردن مدل Nearest Neighbors برای انتخاب نزدیک‌ترین نمونه‌ها
     n_neigh = 5 + 1
     nn = NearestNeighbors(n_neighbors=n_neigh, n_jobs=1)
     nn.fit(X)
     dist, ind = nn.kneighbors(X)
 
     # generating samples
+    # تولید نمونه‌های مصنوعی
     base_indices = np.random.choice(list(range(len(X))),n_to_sample)
     neighbor_indices = np.random.choice(list(range(1, n_neigh)),n_to_sample)
 
@@ -164,6 +167,7 @@ def G_SM(X, y,n_to_sample,cl):
     samples = X_base + np.multiply(np.random.rand(n_to_sample,1),
             X_neighbor - X_base)
 
+    # استفاده از 10 به عنوان برچسب برای نمونه‌های مصنوعی
     #use 10 as label because 0 to 9 real classes and 1 fake/smoted = 10
     return samples, [cl]*n_to_sample
 
@@ -349,6 +353,7 @@ for i in range(len(ids)):
             #store the best encoder and decoder models
             #here, /crs5 is a reference to 5 way cross validation, but is not
             #necessary for illustration purposes
+            # ذخیره بهترین مدل‌ها
             if train_loss < best_loss:
                 print('Saving..')
 
