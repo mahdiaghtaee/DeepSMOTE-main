@@ -14,24 +14,32 @@ t3 = time.time()
 """args for AE"""
 
 args = {}
-args['dim_h'] = 64         # factor controlling size of hidden layers
-args['n_channel'] = 1#3    # number of channels in the input data 
 
+#تعداد نرون‌ها در لایه‌های پنهان شبکه.
+args['dim_h'] = 64          # factor controlling size of hidden layers
+ # تعداد کانال‌های ورودی (در اینجا 1 برای تصاویر سیاه‌وسفید)
+args['n_channel'] = 1       # number of channels in the input data 
+# تعداد ابعاد فضای نهان (latent space)
 args['n_z'] = 300 #600     # number of dimensions in latent space. 
-
+# واریانس در فضای نهان
 args['sigma'] = 1.0        # variance in n_z
+ # پارامتر تنظیمی برای وزن دادن به ضرر Discriminator
 args['lambda'] = 0.01      # hyper param for weight of discriminator loss
+# نرخ یادگیری برای الگوریتم Adam
 args['lr'] = 0.0002        # learning rate for Adam optimizer .000
-args['epochs'] = 200       # how many epochs to run for
+ # تعداد اپوک‌ها برای آموزش
+args['epochs'] = 200 #50         # how many epochs to run for
+# اندازه بچ (Batch Size)
 args['batch_size'] = 100   # batch size for SGD
+ # اگر True باشد، وزن‌ها در هر اپوک ذخیره می‌شود
 args['save'] = True        # save weights at each epoch of training if True
+  # اگر True باشد، مدل آموزش داده می‌شود، در غیر این صورت مدل بارگذاری می‌شود
 args['train'] = True       # train networks if True, else load networks from
-
-args['dataset'] = 'mnist'  #'fmnist' # specify which dataset to use
+# دیتاست مورد استفاده (در اینجا MNIST)
+args['dataset'] = 'mnist' #'fmnist' # specify which dataset to use
 
 
 ##############################################################################
-
 
 
 ## create encoder model and decoder model
@@ -43,6 +51,7 @@ class Encoder(nn.Module):
         self.dim_h = args['dim_h']
         self.n_z = args['n_z']
         
+        # لایه‌های کانولوشن برای استخراج ویژگی‌ها از تصاویر
         # convolutional filters, work excellent with image data
         self.conv = nn.Sequential(
             nn.Conv2d(self.n_channel, self.dim_h, 4, 2, 1, bias=False),
@@ -71,7 +80,9 @@ class Encoder(nn.Module):
         # final layer is fully connected
         self.fc = nn.Linear(self.dim_h * (2 ** 3), self.n_z)
         
-
+   # عبور داده‌ها از لایه‌های کانولوشن
+    # حذف ابعاد اضافی
+     # عبور از لایه fully connected برای تولید ویژگی‌های فضای نهان
     def forward(self, x):
         #print('enc')
         #print('input ',x.size()) #torch.Size([100, 3,32,32])
@@ -134,11 +145,10 @@ def frozen_params(module: nn.Module):
 ##############################################################################
 """functions to create SMOTE images"""
 
+# تابع برای دریافت داده‌های کلاس خاص (مثلاً یک کلاس خاص از داده‌ها)
 def biased_get_class(c):
-    
     xbeg = dec_x[dec_y == c]
     ybeg = dec_y[dec_y == c]
-    
     return xbeg, ybeg
     #return xclass, yclass
 
