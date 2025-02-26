@@ -155,6 +155,8 @@ def G_SM1(X, y,n_to_sample,cl):
 #############################################################################
 np.printoptions(precision=5,suppress=True)
 
+# تعریف مسیر پایه
+
 dtrnimg = '.../0_trn_img.txt'
 dtrnlab = '.../0_trn_lab.txt'
 

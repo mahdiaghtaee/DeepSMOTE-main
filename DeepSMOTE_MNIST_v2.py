@@ -28,7 +28,7 @@ args['lambda'] = 0.01      # hyper param for weight of discriminator loss
 # نرخ یادگیری برای الگوریتم Adam
 args['lr'] = 0.0002        # learning rate for Adam optimizer .000
  # تعداد اپوک‌ها برای آموزش
-args['epochs'] = 200 #50         # how many epochs to run for
+args['epochs'] = 1 #50         # how many epochs to run for
 # اندازه بچ (Batch Size)
 args['batch_size'] = 100   # batch size for SGD
  # اگر True باشد، وزن‌ها در هر اپوک ذخیره می‌شود
@@ -153,6 +153,73 @@ def biased_get_class(c):
     #return xclass, yclass
 
 
+#Borderline-SMOTE
+def borderline_smote(
+    X, y,
+    minority_class,
+    n_to_sample=1000,
+    n_neighbors=5,
+    borderline_threshold=0.5,
+    random_state=None
+):
+    if random_state is not None:
+        np.random.seed(random_state)
+
+    # جدا کردن داده‌ی اقلیت و اکثریت
+    X_min = X[y == minority_class]
+    X_maj = X[y != minority_class]
+
+    # تعداد نمونه‌های اقلیت
+    n_min, n_feat = X_min.shape
+
+    # ساخت KNN روی کل داده‌ها (یا می‌توان به شکل دلخواه فقط اقلیت و اکثریت را وارد کرد)
+    neigh = NearestNeighbors(n_neighbors=n_neighbors)
+    neigh.fit(X)
+
+    # محاسبه همسایه‌های هر نمونه‌ی اقلیت
+    distances, indices = neigh.kneighbors(X_min)
+
+    # شناسایی نقاط مرزی
+    borderline_indices = []
+    for i in range(n_min):
+        neighbors_idx = indices[i]
+        neighbors_labels = y[neighbors_idx]
+        # تعداد همسایه‌های اکثریت
+        n_major_neighbors = np.sum(neighbors_labels != minority_class)
+        if n_major_neighbors / n_neighbors >= borderline_threshold:
+            borderline_indices.append(i)
+
+    # اگر نمونه‌ی مرزی نداریم، می‌توان از SMOTE عادی برای همه استفاده کرد
+    if len(borderline_indices) == 0:
+        borderline_indices = list(range(n_min))
+
+    # انتخاب تصادفی از میان نقاط مرزی برای Oversample
+    base_indices = np.random.choice(borderline_indices, size=n_to_sample, replace=True)
+
+    # اکنون برای درون‌یابی، از همسایه‌های اقلیت هر نقطه استفاده می‌کنیم
+    nn_min = NearestNeighbors(n_neighbors=n_neighbors)
+    nn_min.fit(X_min)
+    _, min_indices = nn_min.kneighbors(X_min)
+
+    samples = []
+    for idx in base_indices:
+        neighbors_of_idx = min_indices[idx]
+        # یکی از همسایه‌های اقلیت را (غیر از خودش) انتخاب می‌کنیم
+        neighbor_idx = np.random.choice(neighbors_of_idx[1:])
+        lam = np.random.rand()
+        sample = X_min[idx] + lam * (X_min[neighbor_idx] - X_min[idx])
+        samples.append(sample)
+
+    samples = np.array(samples)
+    y_samples = np.array([minority_class] * n_to_sample)
+
+    # ادغام داده‌های جدید با داده‌های اصلی
+    X_new = np.vstack([X, samples])
+    y_new = np.hstack([y, y_samples])
+
+    return X_new, y_new
+
+
 # تابع برای تولید نمونه‌های مصنوعی با استفاده از تکنیک SMOTE
 def G_SM(X, y,n_to_sample,cl):
 
@@ -251,11 +318,8 @@ for i in range(len(ids)):
     tensor_x = torch.Tensor(dec_x)
     tensor_y = torch.tensor(dec_y,dtype=torch.long)
     mnist_bal = TensorDataset(tensor_x,tensor_y) 
-    train_loader = torch.utils.data.DataLoader(mnist_bal, 
-        batch_size=batch_size,shuffle=True,num_workers=num_workers)
-    
-    classes = ('0', '1', '2', '3', '4',
-           '5', '6', '7', '8', '9')
+    train_loader = torch.utils.data.DataLoader(mnist_bal,batch_size=batch_size,shuffle=True,num_workers=num_workers)
+    classes = ('0', '1', '2', '3', '4','5', '6', '7', '8', '9')
 
     best_loss = np.inf
 
