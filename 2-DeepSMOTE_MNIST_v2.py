@@ -168,7 +168,7 @@ def borderline_smote(
 
 ##############################################################################
 
-base_dir = 'D:\\PHD\\Paper\\DeepSMOTE\\DeepSMOTE-main\\MNIST'
+base_dir = 'MNIST'
 dtrnimg = os.path.join(base_dir, 'trn_img_f')
 dtrnlab = os.path.join(base_dir, 'trn_lab_f')
 models_dir = os.path.join(base_dir, 'models', 'crs5')
