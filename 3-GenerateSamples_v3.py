@@ -8,9 +8,7 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import collections
 
-##############################################################################
 # هایپرپارامترها
-##############################################################################
 class Config:
     dim_h     = 64   # تعداد فیلترهای پایه در کانولوشن
     n_channel = 1    # تعداد کانال ورودی (Fashion MNIST = 1)
@@ -21,12 +19,7 @@ class Config:
 
 args = Config()
 
-##############################################################################
 # معماری Encoder و Decoder اصلاح‌شده
-##############################################################################
-# توجه: در لایهٔ آخر Encoder و لایهٔ اول Decoder از kernel=3,stride=3,pad=0
-# یا از پارامترهای output_padding برای رسیدن به ابعاد دلخواه استفاده می‌کنیم.
-
 class Encoder(nn.Module):
     def __init__(self, args):
         super(Encoder, self).__init__()
@@ -83,11 +76,6 @@ class Decoder(nn.Module):
             nn.ReLU(True)
         )
 
-        # حالا باید عکس مراحل قبل را انجام دهیم:
-        # 1->3 (kernel=3,stride=3,pad=0)
-        # 3->7 (kernel=4,stride=2,pad=1, output_padding=1)
-        # 7->14 (kernel=4,stride=2,pad=1)
-        # 14->28 (kernel=4,stride=2,pad=1)
         self.deconv = nn.Sequential(
             # (512,1,1) -> (256,3,3)
             nn.ConvTranspose2d(self.dim_h*8, self.dim_h*4, 3, 3, 0),
@@ -116,9 +104,6 @@ class Decoder(nn.Module):
         x = self.deconv(x)                     # (N,1,28,28)
         return x
 
-##############################################################################
-# تابع آموزش Autoencoder روی FashionMNIST (از صفر)
-##############################################################################
 def train_autoencoder(args):
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -182,10 +167,7 @@ def train_autoencoder(args):
     return os.path.join(save_folder, "enc_fixed.pth"), os.path.join(save_folder, "dec_fixed.pth")
 
 
-##############################################################################
 # تولید نمونه‌های مصنوعی با SMOTE در فضای نهان
-##############################################################################
-
 def G_SM1(X, y, n_to_sample, cl):
     """ نسخه سادهٔ SMOTE با KNN """
     n_neigh = 6
@@ -205,9 +187,7 @@ def G_SM1(X, y, n_to_sample, cl):
     labels_fake = [cl]*n_to_sample
     return samples, labels_fake
 
-##############################################################################
 # تلفیق کامل کد (Train + SMOTE) به سبک فولد
-##############################################################################
 def main():
     t0 = time.time()
 

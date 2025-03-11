@@ -189,8 +189,6 @@ idtrl_f = [os.path.join(dtrnlab, image_id) for image_id in ids]
 print(idtrl_f)
 
 
-##############################################################################
-# =========================== CHANGES START HERE ===========================
 NUM_RUNS = 1  # یا هر تعداد تکرار که می‌خواهید
 all_accuracies = []  # ذخیره Accuracyِ میانگین هر تکرار
 
@@ -366,7 +364,6 @@ for run_idx in range(NUM_RUNS):
         t1 = time.time()
         print('total time(min): {:.2f}'.format((t1 - t0)/60))
 
-        #----------------------------------------------------------
         # (1) نمایش چند نمونه از خروجی Decoder جهت ارزیابی کیفی
         encoder.eval()
         decoder.eval()
@@ -390,7 +387,6 @@ for run_idx in range(NUM_RUNS):
         plt.tight_layout()
         plt.show()
 
-        #----------------------------------------------------------
         # (2) آموزش یک طبقه‌بند ساده برای محاسبه‌ی متریک‌های طبقه‌بندی
         class SimpleMLP(nn.Module):
             def __init__(self, input_dim=28*28, hidden_dim=256, num_classes=10):

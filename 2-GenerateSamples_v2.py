@@ -1,10 +1,3 @@
-# اصلاح ساختار آدرس دهی
-# strict=True
-# np.save / np.load 
-
-
-# -*- coding: utf-8 -*-
-
 import collections
 import torch
 import torch.nn as nn
@@ -14,7 +7,6 @@ import os
 print(torch.version.cuda) #10.1
 import time
 t0 = time.time()
-##############################################################################
 """args for models"""
 
 args = {}
@@ -41,7 +33,6 @@ args['train'] = True       # train networks if True, else load networks from
 # دیتاست مورد استفاده (در اینجا MNIST)
 args['dataset'] = 'mnist' #'fmnist' # specify which dataset to use
 
-##############################################################################
 
 ## create encoder model and decoder model
 class Encoder(nn.Module):
@@ -139,8 +130,6 @@ class Decoder(nn.Module):
         x = self.deconv(x)
         return x
 
-##############################################################################
-
 # تابع برای دریافت داده‌های کلاس خاص (مثلاً یک کلاس خاص از داده‌ها)
 def biased_get_class1(c):
     
@@ -170,10 +159,8 @@ def G_SM1(X, y,n_to_sample,cl):
             X_neighbor - X_base)
 
     # استفاده از 10 به عنوان برچسب برای نمونه‌های مصنوعی
-    #use 10 as label because 0 to 9 real classes and 1 fake/smoted = 10
     return samples, [cl]*n_to_sample
 
-#############################################################################
  # تنظیمات چاپ اعداد برای دقت بیشتر
 np.printoptions(precision=5,suppress=True)
 
