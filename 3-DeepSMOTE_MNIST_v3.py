@@ -21,17 +21,17 @@ t3 = time.time()
 """args for AE"""
 
 args = {}
-args['dim_h'] = 64         # ابعاد لایه‌های پنهان
-args['n_channel'] = 1      # تعداد کانال: MNIST سیاه‌وسفید=1
+args['dim_h'] = 256         # ابعاد لایه‌های پنهان
+args['n_channel'] = 1      # تعداد کانال: FMNIST سیاه‌وسفید=1
 args['n_z'] = 300          # ابعاد فضای نهان
 args['sigma'] = 1.0        # واریانس فضای نهان (در این کد کمتر استفاده شده)
 args['lambda'] = 0.01      # پارامتر وزن ضرر یا بخش‌های دیگر
-args['lr'] = 0.0002        # نرخ یادگیری
-args['epochs'] = 10       # تعداد تکرارها (اپوک برای آموزش AE)
+args['lr'] = 0.0003        # نرخ یادگیری
+args['epochs'] = 1       # تعداد تکرارها (اپوک برای آموزش AE)
 args['batch_size'] = 100   
 args['save'] = True       
 args['train'] = True      
-args['dataset'] = 'mnist' 
+args['dataset'] = 'fmnist' 
 
 ##############################################################################
 """مدل Encoder و Decoder"""
@@ -103,6 +103,13 @@ def free_params(module: nn.Module):
 def frozen_params(module: nn.Module):
     for p in module.parameters():
         p.requires_grad = False
+
+
+def normalize_to_minus1_plus1(x):
+    # x فرض می‌شود که در بازه [0,255] باشد
+    x = x / 255.0
+    x = x * 2.0 - 1.0
+    return x
 
 """تابع Borderline-SMOTE (برای جایگزینی SMOTE کلاسیک)"""
 
@@ -184,7 +191,7 @@ print(idtrl_f)
 
 ##############################################################################
 # =========================== CHANGES START HERE ===========================
-NUM_RUNS = 10  # یا هر تعداد تکرار که می‌خواهید
+NUM_RUNS = 1  # یا هر تعداد تکرار که می‌خواهید
 all_accuracies = []  # ذخیره Accuracyِ میانگین هر تکرار
 
 for run_idx in range(NUM_RUNS):
@@ -214,6 +221,9 @@ for run_idx in range(NUM_RUNS):
         print('train imgs before reshape ',dec_x.shape) 
         print('train labels ',dec_y.shape) 
         print(collections.Counter(dec_y))
+
+        # اعمال نرمال‌سازی: تبدیل مقادیر از [0,255] به [-1,1]
+        dec_x = normalize_to_minus1_plus1(dec_x)
 
         dec_x = dec_x.reshape(dec_x.shape[0],1,28,28)   
         print('train imgs after reshape ',dec_x.shape) 
