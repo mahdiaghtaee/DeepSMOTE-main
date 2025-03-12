@@ -24,7 +24,7 @@ args['n_z'] = 300          # ابعاد فضای نهان
 args['sigma'] = 1.0        # واریانس فضای نهان (در این کد کمتر استفاده شده)
 args['lambda'] = 0.01      # پارامتر وزن ضرر یا بخش‌های دیگر
 args['lr'] = 0.0002        # نرخ یادگیری
-args['epochs'] = 10       # تعداد تکرارها (اپوک برای آموزش AE)
+args['epochs'] = 20       # تعداد تکرارها (اپوک برای آموزش AE)
 args['batch_size'] = 100   
 args['save'] = True       
 args['train'] = True      
@@ -92,6 +92,13 @@ class Decoder(nn.Module):
         return x
 
 """توابع کنترلی پارامترها"""
+
+
+def normalize_to_minus1_plus1(x):
+    # x فرض می‌شود که در بازه [0,255] باشد
+    x = x / 255.0
+    x = x * 2.0 - 1.0
+    return x
 
 def free_params(module: nn.Module):
     for p in module.parameters():
@@ -208,6 +215,9 @@ for run_idx in range(NUM_RUNS):
         print('train imgs before reshape ',dec_x.shape) 
         print('train labels ',dec_y.shape) 
         print(collections.Counter(dec_y))
+
+         # اعمال نرمال‌سازی: تبدیل مقادیر از [0,255] به [-1,1]
+        dec_x = normalize_to_minus1_plus1(dec_x)
 
         dec_x = dec_x.reshape(dec_x.shape[0],1,28,28)   
         print('train imgs after reshape ',dec_x.shape) 
